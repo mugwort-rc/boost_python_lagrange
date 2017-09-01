@@ -38,4 +38,4 @@ x - -1.2699038761754027
 ## Reference
 
 * <https://gist.github.com/mugwort-rc/1ff6ff1246f529d4870fbc8084520ebd>
-* lagrange.ref.lagrange
+* [lagrange.ref.lagrange](https://github.com/mugwort-rc/boost_python_lagrange/blob/master/lagrange/ref/lagrange.py)

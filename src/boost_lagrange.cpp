@@ -90,7 +90,23 @@ void init_Lagrange(const std::string &name) {
 }
 
 
+double py_fast(double x, const std::vector<double> &xs, const std::vector<double> &ws) {
+    if ( xs.size() != ws.size() ) {
+        PyErr_SetString(PyExc_AssertionError, "array must be same langth.");
+        boost::python::throw_error_already_set();
+    }
+    return Lagrange::fast(x, xs, ws);
+}
+
+
 BOOST_PYTHON_MODULE(_lagrange) {
     init_Lagrange<boost::multiprecision::cpp_dec_float_50>("Lagrange_f50");
     init_Lagrange<boost::multiprecision::cpp_dec_float_100>("Lagrange_f100");
+
+    boost::python::def("fast", &py_fast);
+    // python::list to std::vector<T> converter
+    boost::python::converter::registry::push_back(
+        &pylist_to_vector_converter<std::vector<double>>::convertible,
+        &pylist_to_vector_converter<std::vector<double>>::construct,
+        boost::python::type_id<std::vector<double>>());
 }

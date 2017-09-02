@@ -84,6 +84,23 @@ public:
 
     std::vector<T> lag;
 
-};
 
+    static double fast(double x, const std::vector<double> &xs, const std::vector<double> &ws) {
+        assert(xs.size() == ws.size());
+        double result = 0.0;
+        for (std::size_t j = 0; j < xs.size(); ++j) {
+            double n = 1.0, d = 1.0;
+            for (std::size_t k = 0; k < xs.size(); ++k) {
+                if ( j == k ) {
+                    continue;
+                }
+                n *= x     - xs[k];
+                d *= xs[j] - xs[k];
+            }
+            result += ws[j] * (n / d);
+        }
+        return result;
+    }
+
+};
 

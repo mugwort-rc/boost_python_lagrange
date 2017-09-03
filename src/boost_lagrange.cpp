@@ -41,6 +41,22 @@ public:
 
 
 template <typename T_>
+class vector_to_pylist_converter {
+public:
+    typedef T_ native_type;
+
+    static PyObject * convert(const native_type &v) {
+        boost::python::list retval;
+        for (auto i : v) {
+            retval.append(boost::python::object(i));
+        }
+        return boost::python::incref(retval.ptr());
+    }
+
+};
+
+
+template <typename T_>
 class pylist_to_vector_converter {
 public:
     typedef T_ native_type;
@@ -68,9 +84,20 @@ public:
 
 
 template <typename T>
+std::string vector_repr(const std::vector<T> &self) {
+    boost::python::list pylist;
+    for (auto item : self) {
+        pylist.append(boost::python::object(item));
+    }
+    return boost::python::extract<std::string>(boost::python::str(pylist));
+}
+
+
+template <typename T>
 void init_Lagrange(const std::string &name) {
-    boost::python::class_<Lagrange<T>, std::shared_ptr<Lagrange<T>>>(name.c_str(), boost::python::init<std::vector<T>, std::vector<T>>())
+    boost::python::class_<Lagrange<T>, std::shared_ptr<Lagrange<T>>>(("Lagrange_" + name).c_str(), boost::python::init<std::vector<T>, std::vector<T>>())
         .def("__call__", &Lagrange<T>::operator())
+        .def_readonly("c", &Lagrange<T>::coefficients)
         ;
 
     // T to python::float converter
@@ -80,13 +107,22 @@ void init_Lagrange(const std::string &name) {
     boost::python::converter::registry::push_back(
         &float_converter<T>::convertible,
         &float_converter<T>::construct,
-        boost::python::type_id<T>());
+        boost::python::type_id<T>())
+        ;
+
+    // std::vector<T> to python::list converter
+    //boost::python::to_python_converter<std::vector<T>, vector_to_pylist_converter<std::vector<T>>>();
+    boost::python::class_<std::vector<T>>((name + "_vector").c_str())
+        .def(boost::python::vector_indexing_suite<std::vector<T>>())
+        .def("__repr__", &vector_repr<T>)
+        ;
 
     // python::list to std::vector<T> converter
     boost::python::converter::registry::push_back(
         &pylist_to_vector_converter<std::vector<T>>::convertible,
         &pylist_to_vector_converter<std::vector<T>>::construct,
-        boost::python::type_id<std::vector<T>>());
+        boost::python::type_id<std::vector<T>>())
+        ;
 }
 
 
@@ -100,8 +136,8 @@ double py_fast(double x, const std::vector<double> &xs, const std::vector<double
 
 
 BOOST_PYTHON_MODULE(_lagrange) {
-    init_Lagrange<boost::multiprecision::cpp_dec_float_50>("Lagrange_f50");
-    init_Lagrange<boost::multiprecision::cpp_dec_float_100>("Lagrange_f100");
+    init_Lagrange<boost::multiprecision::cpp_dec_float_50>("float_50");
+    init_Lagrange<boost::multiprecision::cpp_dec_float_100>("float_100");
 
     boost::python::def("fast", &py_fast);
     // python::list to std::vector<T> converter

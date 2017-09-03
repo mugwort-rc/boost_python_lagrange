@@ -27,7 +27,7 @@ template <typename T>
 class Lagrange {
 public:
     Lagrange(const std::vector<T> &x, const std::vector<T> &w) :
-        lag()
+        coefficients()
     {
         assert(x.size() == w.size());
         std::vector<T> p;
@@ -47,15 +47,15 @@ public:
             }
             p = add(p, pt);
         }
-        lag = p;
+        coefficients = p;
     }
 
     T operator ()(const T &x) const {
         T result = 0.0;
-        int d = lag.size() - 1;
-        for (std::size_t i = 0; i < lag.size(); ++i) {
-            //result += std::pow(x, d) * lag[i];
-            result += boost::multiprecision::pow(x, d) * lag[i];
+        int d = coefficients.size() - 1;
+        for (std::size_t i = 0; i < coefficients.size(); ++i) {
+            //result += std::pow(x, d) * coefficients[i];
+            result += boost::multiprecision::pow(x, d) * coefficients[i];
             --d;
         }
         return result;
@@ -82,7 +82,7 @@ public:
         }
     }
 
-    std::vector<T> lag;
+    std::vector<T> coefficients;
 
 
     static T fast(T x, const std::vector<T> &xs, const std::vector<T> &ws) {

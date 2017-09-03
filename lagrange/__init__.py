@@ -1,3 +1,3 @@
 from ._lagrange import *
 
-Lagrange = Lagrange_f50
+Lagrange = Lagrange_float_50

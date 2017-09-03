@@ -85,11 +85,11 @@ public:
     std::vector<T> lag;
 
 
-    static double fast(double x, const std::vector<double> &xs, const std::vector<double> &ws) {
+    static T fast(T x, const std::vector<T> &xs, const std::vector<T> &ws) {
         assert(xs.size() == ws.size());
-        double result = 0.0;
+        T result = 0.0;
         for (std::size_t j = 0; j < xs.size(); ++j) {
-            double n = 1.0, d = 1.0;
+            T n = 1.0, d = 1.0;
             for (std::size_t k = 0; k < xs.size(); ++k) {
                 if ( j == k ) {
                     continue;

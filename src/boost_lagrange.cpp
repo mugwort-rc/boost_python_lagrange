@@ -95,7 +95,7 @@ double py_fast(double x, const std::vector<double> &xs, const std::vector<double
         PyErr_SetString(PyExc_AssertionError, "array must be same langth.");
         boost::python::throw_error_already_set();
     }
-    return Lagrange::fast(x, xs, ws);
+    return Lagrange<double>::fast(x, xs, ws);
 }
 
 

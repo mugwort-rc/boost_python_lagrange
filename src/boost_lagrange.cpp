@@ -94,10 +94,36 @@ std::string vector_repr(const std::vector<T> &self) {
 
 
 template <typename T>
+inline void lagrange_input_assertion(const std::vector<T> &x, const std::vector<T> &w) {
+    if ( x.size() != w.size() ) {
+        PyErr_SetString(PyExc_AssertionError, "array must be same langth.");
+        boost::python::throw_error_already_set();
+    }
+}
+
+
+template <typename T>
+std::shared_ptr<Lagrange<T>> make_Lagrange(const std::vector<T> &x, const std::vector<T> &w) {
+    lagrange_input_assertion<T>(x, w);
+    return std::make_shared<Lagrange<T>>(x, w);
+}
+
+template<typename T>
+boost::python::list tolist(const Lagrange<T> &l) {
+    boost::python::list r;
+    for (const auto & c : l.coefficients ) {
+        r.append(static_cast<long double>(c));
+    }
+    return r;
+}
+
+template <typename T>
 void init_Lagrange(const std::string &name) {
-    boost::python::class_<Lagrange<T>, std::shared_ptr<Lagrange<T>>>(("Lagrange_" + name).c_str(), boost::python::init<std::vector<T>, std::vector<T>>())
+    boost::python::class_<Lagrange<T>, std::shared_ptr<Lagrange<T>>>(("Lagrange_" + name).c_str(), boost::python::no_init)
+        .def("__init__", boost::python::make_constructor(&make_Lagrange<T>))
         .def("__call__", &Lagrange<T>::operator())
         .def_readonly("c", &Lagrange<T>::coefficients)
+        .def("coefficients", &tolist<T>)
         ;
 
     // T to python::float converter
@@ -125,12 +151,39 @@ void init_Lagrange(const std::string &name) {
         ;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+std::shared_ptr<DeltaLagrange<T>> make_DeltaLagrange(const std::vector<T> &x, const std::vector<T> &w) {
+    lagrange_input_assertion<T>(x, w);
+    return std::make_shared<DeltaLagrange<T>>(x, w);
+}
+
+template<typename T>
+boost::python::tuple totuple(const DeltaLagrange<T> &l) {
+    boost::python::list r;
+    for (const auto & c : l.coefficients ) {
+        r.append(static_cast<long double>(c));
+    }
+    return boost::python::make_tuple(
+        r,
+        static_cast<long double>(l.x0),
+        static_cast<long double>(l.w0)
+    );
+}
+
+template <typename T>
+void init_DeltaLagrange(const std::string &name) {
+    boost::python::class_<DeltaLagrange<T>, std::shared_ptr<DeltaLagrange<T>>>(("DeltaLagrange_" + name).c_str(), boost::python::no_init)
+        .def("__init__", boost::python::make_constructor(&make_DeltaLagrange<T>))
+        .def("__call__", &DeltaLagrange<T>::operator())
+        .def_readonly("c", &DeltaLagrange<T>::coefficients)
+        .def("coefficients", &totuple<T>)
+        ;
+}
 
 double py_fast(double x, const std::vector<double> &xs, const std::vector<double> &ws) {
-    if ( xs.size() != ws.size() ) {
-        PyErr_SetString(PyExc_AssertionError, "array must be same langth.");
-        boost::python::throw_error_already_set();
-    }
+    lagrange_input_assertion<double>(xs, ws);
     return Lagrange<double>::fast(x, xs, ws);
 }
 
@@ -139,6 +192,9 @@ BOOST_PYTHON_MODULE(_lagrange) {
     init_Lagrange<boost::multiprecision::cpp_dec_float_50>("float_50");
     init_Lagrange<boost::multiprecision::cpp_dec_float_100>("float_100");
 
+    init_DeltaLagrange<boost::multiprecision::cpp_dec_float_50>("float_50");
+    init_DeltaLagrange<boost::multiprecision::cpp_dec_float_100>("float_100");
+
     boost::python::def("fast", &py_fast);
     // python::list to std::vector<T> converter
     boost::python::converter::registry::push_back(
@@ -146,3 +202,4 @@ BOOST_PYTHON_MODULE(_lagrange) {
         &pylist_to_vector_converter<std::vector<double>>::construct,
         boost::python::type_id<std::vector<double>>());
 }
+

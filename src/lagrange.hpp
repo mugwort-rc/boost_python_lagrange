@@ -51,13 +51,15 @@ public:
     }
 
     T operator ()(const T &x) const {
+        assert(coefficients.size() > 0);
         T result = 0.0;
-        int d = coefficients.size() - 1;
-        for (std::size_t i = 0; i < coefficients.size(); ++i) {
-            //result += std::pow(x, d) * coefficients[i];
-            result += boost::multiprecision::pow(x, d) * coefficients[i];
-            --d;
+        std::size_t d = coefficients.size() - 1;
+        for (std::size_t i = 0; i < d; ++i) {
+            // result += std::pow(x, d) * coefficients[i];
+            result += coefficients[i];
+            result *= x;
         }
+        result += coefficients[d];
         return result;
     }
 
@@ -84,7 +86,6 @@ public:
 
     std::vector<T> coefficients;
 
-
     static T fast(T x, const std::vector<T> &xs, const std::vector<T> &ws) {
         assert(xs.size() == ws.size());
         T result = 0.0;
@@ -101,6 +102,79 @@ public:
         }
         return result;
     }
+
+};
+
+
+template <typename T>
+class DeltaLagrange {
+public:
+    DeltaLagrange(const std::vector<T> &x, const std::vector<T> &w) :
+        x0(x[0]),
+        w0(w[0]),
+        coefficients()
+    {
+        assert(x.size() == w.size());
+        std::vector<T> p;
+        p.push_back(0.0);
+        for (std::size_t j = 0; j < x.size(); ++j) {
+            std::vector<T> pt;
+            pt.push_back(w[j] - w0);
+            auto xj = x[j] - x0;
+            for (std::size_t k = 0; k < x.size(); ++k) {
+                if (k == j) {
+                    continue;
+                }
+                auto xk = x[k] - x0;
+                T fac = xj - xk;
+                std::vector<T> poly;
+                poly.push_back(1.0 / fac);
+                poly.push_back(-xk / fac);
+                pt = full_convolve(pt, poly);
+            }
+            p = add(p, pt);
+        }
+        coefficients = p;
+    }
+
+    T operator ()(const T &x) const {
+        assert(coefficients.size() > 0);
+        T result = 0.0;
+        auto xd = x - x0;
+        std::size_t d = coefficients.size() - 1;
+        for (std::size_t i = 0; i < d; ++i) {
+            // result += std::pow(x, d) * coefficients[i];
+            result += coefficients[i];
+            result *= xd;
+        }
+        result += coefficients[d];
+        return result + w0;
+    }
+
+    std::vector<T> add(const std::vector<T> &a, const std::vector<T> &b) const {
+        int diff = a.size() - b.size();
+        if ( diff == 0 ) {
+            std::vector<T> result;
+            for (std::size_t i = 0; i < a.size(); ++i) {
+                result.push_back(a[i] + b[i]);
+            }
+            return result;
+        } else if ( diff > 0 ) {
+            std::vector<T> new_b(diff, 0);
+            new_b.reserve(diff + b.size());
+            new_b.insert(new_b.end(), b.begin(), b.end());
+            return add(a, new_b);
+        } else {
+            std::vector<T> new_a(-diff, 0);
+            new_a.reserve(-diff + a.size());
+            new_a.insert(new_a.end(), a.begin(), a.end());
+            return add(new_a, b);
+        }
+    }
+
+    T x0;
+    T w0;
+    std::vector<T> coefficients;
 
 };
 

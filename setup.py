@@ -22,7 +22,7 @@ lagrange = Extension(
 
 setup(
     name="lagrange",
-    version="1.0.0",
+    version="1.0.1",
     description="C++ implementation of scipy.interpolate.lagrange",
     author="mugwort_rc",
     author_email="mugwort rc at gmail com",
